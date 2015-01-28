@@ -189,11 +189,15 @@ AC_ARG_ENABLE([rtcd],
     [AS_HELP_STRING([--disable-rtcd], [Disable run-time CPU capabilities detection])],,
     [enable_rtcd=yes])
 
+AC_ARG_ENABLE([intrinsics],
+    [AS_HELP_STRING([--enable-intrinsics], [Enable intrinsics optimizations for ARM(float) X86(fixed)])],,
+    [enable_intrinsics=no])
+
 rtcd_support=no
 cpu_arm=no
 
 AS_IF([test x"${enable_asm}" = x"yes"],[
-    inline_optimization="No ASM for your platform, please send patches"
+    inline_optimization="No inline ASM for your platform, please send patches"
     case $host_cpu in
       arm*)
         dnl Currently we only have asm for fixed-point
@@ -317,6 +321,14 @@ AS_IF([test x"${enable_asm}" = x"yes"],[
                     [rtcd_support=ARM"$rtcd_support"],
                     [rtcd_support="no"]
                 )
+                AC_MSG_CHECKING([for apple style tools])
+                AC_PREPROC_IFELSE([AC_LANG_PROGRAM([
+#ifndef __APPLE__
+#error 1
+#endif],[])],
+                    [AC_MSG_RESULT([yes]); ARM2GNU_PARAMS="--apple"],
+                    [AC_MSG_RESULT([no]); ARM2GNU_PARAMS=""])
+                AC_SUBST(ARM2GNU_PARAMS)
             ],
             [
                 AC_MSG_WARN(
@@ -331,11 +343,179 @@ AS_IF([test x"${enable_asm}" = x"yes"],[
    asm_optimization="disabled"
 ])
 
-AM_CONDITIONAL([CPU_ARM], [test "$cpu_arm" = "yes"])
 AM_CONDITIONAL([OPUS_ARM_INLINE_ASM],
-    [test x"${inline_optimization:0:3}" = x"ARM"])
+    [test x"${inline_optimization%% *}" = x"ARM"])
 AM_CONDITIONAL([OPUS_ARM_EXTERNAL_ASM],
-    [test x"${asm_optimization:0:3}" = x"ARM"])
+    [test x"${asm_optimization%% *}" = x"ARM"])
+
+AM_CONDITIONAL([HAVE_SSE4_1], [false])
+AM_CONDITIONAL([HAVE_SSE2], [false])
+
+AS_IF([test x"$enable_intrinsics" = x"yes"],[
+   case $host_cpu in
+   arm*)
+      cpu_arm=yes
+      AC_MSG_CHECKING(if compiler supports ARM NEON intrinsics)
+      save_CFLAGS="$CFLAGS"; CFLAGS="-mfpu=neon $CFLAGS"
+      AC_LINK_IFELSE(
+         [
+            AC_LANG_PROGRAM(
+               [[#include <arm_neon.h>
+               ]],
+               [[
+                  static float32x4_t A[2], SUMM;
+                  SUMM = vmlaq_f32(SUMM, A[0], A[1]);
+               ]]
+            )
+         ],[
+            OPUS_ARM_NEON_INTR=1
+            AC_MSG_RESULT([yes])
+         ],[
+            OPUS_ARM_NEON_INTR=0
+            AC_MSG_RESULT([no])
+         ]
+      )
+      CFLAGS="$save_CFLAGS"
+      #Now we know if compiler supports ARM neon intrinsics or not
+
+      #Currently we only have intrinsic optimization for floating point
+      AS_IF([test x"$enable_float" = x"yes"],
+      [
+         AS_IF([test x"$OPUS_ARM_NEON_INTR" = x"1"],
+         [
+            AC_DEFINE([OPUS_ARM_NEON_INTR], 1, [Compiler supports ARMv7 Neon Intrinsics])
+            AS_IF([test x"enable_rtcd" != x""],
+               [rtcd_support="ARM (ARMv7_Neon_Intrinsics)"],[])
+            enable_intrinsics="$enable_intrinsics ARMv7_Neon_Intrinsics"
+            dnl Don't see why defining these is necessary to check features at runtime
+            AC_DEFINE([OPUS_ARM_MAY_HAVE_EDSP], 1, [Define if compiler support EDSP Instructions])
+            AC_DEFINE([OPUS_ARM_MAY_HAVE_MEDIA], 1, [Define if compiler support MEDIA Instructions])
+            AC_DEFINE([OPUS_ARM_MAY_HAVE_NEON], 1, [Define if compiler support NEON instructions])
+         ],
+         [
+            AC_MSG_WARN([Compiler does not support ARM intrinsics])
+            enable_intrinsics=no
+         ])
+      ], [
+            AC_MSG_WARN([Currently on have ARM intrinsics for float])
+            enable_intrinsics=no
+      ])
+   ;;
+   "i386" | "i686" | "x86_64")
+    AS_IF([test x"$enable_float" = x"no"],[
+    AS_IF([test x"$enable_rtcd" = x"yes"],[
+            get_cpuid_by_asm="no"
+            AC_MSG_CHECKING([Get CPU Info])
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+                 #include <stdio.h>
+            ]],[[
+                 unsigned int CPUInfo0;
+                 unsigned int CPUInfo1;
+                 unsigned int CPUInfo2;
+                 unsigned int CPUInfo3;
+                 unsigned int InfoType;
+                 __asm__ __volatile__ (
+                 "cpuid11":
+                 "=a" (CPUInfo0),
+                 "=b" (CPUInfo1),
+                 "=c" (CPUInfo2),
+                 "=d" (CPUInfo3) :
+                 "a" (InfoType), "c" (0)
+                );
+            ]])],
+            [get_cpuid_by_asm="yes"
+             AC_MSG_RESULT([Inline Assembly])],
+             [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+                 #include <cpuid.h>
+            ]],[[
+                 unsigned int CPUInfo0;
+                 unsigned int CPUInfo1;
+                 unsigned int CPUInfo2;
+                 unsigned int CPUInfo3;
+                 unsigned int InfoType;
+                 __get_cpuid(InfoType, &CPUInfo0, &CPUInfo1, &CPUInfo2, &CPUInfo3);
+            ]])],
+            [AC_MSG_RESULT([C method])],
+            [AC_MSG_ERROR([not support Get CPU Info, please disable intrinsics ])])])
+
+       AC_MSG_CHECKING([sse4.1])
+       TMP_CFLAGS="$CFLAGS"
+       gcc -Q --help=target | grep "\-msse4.1 "
+       AS_IF([test x"$?" = x"0"],[
+            CFLAGS="$CFLAGS -msse4.1"
+            AC_CHECK_HEADER(xmmintrin.h, [], [AC_MSG_ERROR([Couldn't find xmmintrin.h])])
+            AC_CHECK_HEADER(emmintrin.h, [], [AC_MSG_ERROR([Couldn't find emmintrin.h])])
+            AC_CHECK_HEADER(smmintrin.h, [], [AC_MSG_ERROR([Couldn't find smmintrin.h])],[
+            #ifdef HAVE_XMMINSTRIN_H
+                 #include <xmmintrin.h>
+                 #endif
+                 #ifdef HAVE_EMMINSTRIN_H
+                 #include <emmintrin.h>
+                 #endif
+            ])
+
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+                 #include <xmmintrin.h>
+                 #include <emmintrin.h>
+                 #include <smmintrin.h>
+            ]],[[
+                 __m128i mtest = _mm_setzero_si128();
+                 mtest = _mm_cmpeq_epi64(mtest, mtest);
+            ]])],
+            [AC_MSG_RESULT([yes])], [AC_MSG_ERROR([Compiler & linker failure for sse4.1, please disable intrinsics])])
+
+            CFLAGS="$TMP_CFLAGS"
+            AC_DEFINE([OPUS_X86_MAY_HAVE_SSE4_1], [1], [For x86 sse4.1 instrinsics optimizations])
+            AC_DEFINE([OPUS_X86_MAY_HAVE_SSE2], [1], [For x86 sse2 instrinsics optimizations])
+            rtcd_support="x86 sse4.1"
+            AM_CONDITIONAL([HAVE_SSE4_1], [true])
+            AM_CONDITIONAL([HAVE_SSE2], [true])
+            AS_IF([test x"$get_cpuid_by_asm" = x"yes"],[AC_DEFINE([CPU_INFO_BY_ASM], [1], [Get CPU Info by asm method])],
+            [AC_DEFINE([CPU_INFO_BY_C], [1], [Get CPU Info by C method])])
+             ],[ ##### Else case for AS_IF([test x"$?" = x"0"])
+               gcc -Q --help=target | grep "\-msse2 "
+               AC_MSG_CHECKING([sse2])
+               AS_IF([test x"$?" = x"0"],[
+                   AC_MSG_RESULT([yes])
+                   CFLAGS="$CFLAGS -msse2"
+                   AC_CHECK_HEADER(xmmintrin.h, [], [AC_MSG_ERROR([Couldn't find xmmintrin.h])])
+                   AC_CHECK_HEADER(emmintrin.h, [], [AC_MSG_ERROR([Couldn't find emmintrin.h])])
+
+                   AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+                        #include <xmmintrin.h>
+                        #include <emmintrin.h>
+                   ]],[[
+                        __m128i mtest = _mm_setzero_si128();
+                   ]])],
+                   [AC_MSG_RESULT([yes])], [AC_MSG_ERROR([Compiler & linker failure for sse2, please disable intrinsics])])
+
+                  CFLAGS="$TMP_CFLAGS"
+                  AC_DEFINE([OPUS_X86_MAY_HAVE_SSE2], [1], [For x86 sse2 instrinsics optimize])
+                  rtcd_support="x86 sse2"
+                  AM_CONDITIONAL([HAVE_SSE2], [true])
+                  AS_IF([test x"$get_cpuid_by_asm" = x"yes"],[AC_DEFINE([CPU_INFO_BY_ASM], [1], [Get CPU Info by asm method])],
+                  [AC_DEFINE([CPU_INFO_BY_C], [1], [Get CPU Info by c method])])
+            ],[enable_intrinsics="no"]) #End of AS_IF([test x"$?" = x"0"]
+        ])
+    ], [
+        enable_intrinsics="no"
+    ]) ## End of AS_IF([test x"$enable_rtcd" = x"yes"]
+],
+[  ## Else case for AS_IF([test x"$enable_float" = x"no"]
+   AC_MSG_WARN([Disabling intrinsics .. x86 intrinsics only avail for fixed point])
+   enable_intrinsics="no"
+]) ## End of AS_IF([test x"$enable_float" = x"no"]
+   ;;
+   *)
+      AC_MSG_WARN([No intrinsics support for your architecture])
+      enable_intrinsics="no"
+   ;;
+   esac
+])
+
+AM_CONDITIONAL([CPU_ARM], [test "$cpu_arm" = "yes"])
+AM_CONDITIONAL([OPUS_ARM_NEON_INTR],
+    [test x"$OPUS_ARM_NEON_INTR" = x"1"])
 
 AS_IF([test x"$enable_rtcd" = x"yes"],[
     AS_IF([test x"$rtcd_support" != x"no"],[
@@ -443,6 +623,7 @@ AC_MSG_NOTICE([
       Fixed point debugging: ......... ${enable_fixed_point_debug}
       Inline Assembly Optimizations: . ${inline_optimization}
       External Assembly Optimizations: ${asm_optimization}
+      Intrinsics Optimizations.......: ${enable_intrinsics}
       Run-time CPU detection: ........ ${rtcd_support}
       Custom modes: .................. ${enable_custom_modes}
       Assertion checking: ............ ${enable_assertions}

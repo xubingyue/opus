@@ -18,6 +18,9 @@ include opus_sources.mk
 
 if FIXED_POINT
 SILK_SOURCES += $(SILK_SOURCES_FIXED)
+if HAVE_SSE4_1
+SILK_SOURCES += $(SILK_SOURCES_SSE4_1) $(SILK_SOURCES_FIXED_SSE4_1)
+endif
 else
 SILK_SOURCES += $(SILK_SOURCES_FLOAT)
 endif
@@ -27,9 +30,23 @@ else
 OPUS_SOURCES += $(OPUS_SOURCES_FLOAT)
 endif
 
+if HAVE_SSE4_1
+CELT_SOURCES += $(CELT_SOURCES_SSE) $(CELT_SOURCES_SSE4_1)
+else
+if HAVE_SSE2
+CELT_SOURCES += $(CELT_SOURCES_SSE)
+endif
+endif
+
 if CPU_ARM
 CELT_SOURCES += $(CELT_SOURCES_ARM)
 SILK_SOURCES += $(SILK_SOURCES_ARM)
+
+if OPUS_ARM_NEON_INTR
+CELT_SOURCES += $(CELT_SOURCES_ARM_NEON_INTR)
+OPUS_ARM_NEON_INTR_CPPFLAGS = -mfpu=neon
+endif
+
 if OPUS_ARM_EXTERNAL_ASM
 nodist_libopus_la_SOURCES = $(CELT_SOURCES_ARM_ASM:.s=-gnu.S)
 BUILT_SOURCES = $(CELT_SOURCES_ARM_ASM:.s=-gnu.S) \
@@ -95,12 +112,22 @@ celt_tests_test_unit_laplace_LDADD = $(LIBM)
 
 celt_tests_test_unit_mathops_SOURCES = celt/tests/test_unit_mathops.c
 celt_tests_test_unit_mathops_LDADD = $(LIBM)
+if CPU_ARM
+if OPUS_ARM_EXTERNAL_ASM
+celt_tests_test_unit_mathops_LDADD += libopus.la
+endif
+endif
 
 celt_tests_test_unit_mdct_SOURCES = celt/tests/test_unit_mdct.c
 celt_tests_test_unit_mdct_LDADD = $(LIBM)
 
 celt_tests_test_unit_rotation_SOURCES = celt/tests/test_unit_rotation.c
 celt_tests_test_unit_rotation_LDADD = $(LIBM)
+if CPU_ARM
+if OPUS_ARM_EXTERNAL_ASM
+celt_tests_test_unit_rotation_LDADD += libopus.la
+endif
+endif
 
 celt_tests_test_unit_types_SOURCES = celt/tests/test_unit_types.c
 celt_tests_test_unit_types_LDADD = $(LIBM)
@@ -225,7 +252,23 @@ $(CELT_SOURCES_ARM_ASM:%.s=%-gnu.S): $(top_srcdir)/celt/arm/arm2gnu.pl
 
 # convert ARM asm to GNU as format
 %-gnu.S: $(top_srcdir)/%.s
-	$(top_srcdir)/celt/arm/arm2gnu.pl < $< > $@
+	$(top_srcdir)/celt/arm/arm2gnu.pl @ARM2GNU_PARAMS@ < $< > $@
 # For autoconf-modified sources (e.g., armopts.s)
 %-gnu.S: %.s
-	$(top_srcdir)/celt/arm/arm2gnu.pl < $< > $@
+	$(top_srcdir)/celt/arm/arm2gnu.pl @ARM2GNU_PARAMS@ < $< > $@
+
+SSE_OBJ = %_sse.o %_sse.lo %test_unit_mathops.o %test_unit_rotation.o
+
+if HAVE_SSE4_1
+$(SSE_OBJ): CFLAGS += -msse4.1
+else
+if HAVE_SSE2
+$(SSE_OBJ): CFLAGS += -msse2
+endif
+endif
+
+if OPUS_ARM_NEON_INTR
+CELT_ARM_NEON_INTR_OBJ = $(CELT_SOURCES_ARM_NEON_INTR:.c=.lo) \
+			%test_unit_rotation.o %test_unit_mathops.o
+$(CELT_ARM_NEON_INTR_OBJ): CFLAGS += $(OPUS_ARM_NEON_INTR_CPPFLAGS)
+endif

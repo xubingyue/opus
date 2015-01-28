@@ -44,7 +44,24 @@
 #include "entdec.c"
 #include "mathops.c"
 #include "bands.h"
+#include "pitch.c"
+#include "celt_lpc.c"
 #include <math.h>
+
+#if defined(OPUS_X86_MAY_HAVE_SSE4_1) || defined(OPUS_X86_MAY_HAVE_SSE2)
+#include "x86/pitch_sse.c"
+#if defined(OPUS_X86_MAY_HAVE_SSE4_1)
+#include "x86/celt_lpc_sse.c"
+#endif
+#include "x86/x86_celt_map.c"
+#elif ((defined(OPUS_ARM_ASM) && defined(FIXED_POINT)) \
+       || defined(OPUS_ARM_NEON_INTR))
+#if defined(OPUS_ARM_NEON_INTR)
+#include "arm/celt_neon_intr.c"
+#endif
+#include "arm/arm_celt_map.c"
+#endif
+
 #define MAX_SIZE 100
 
 int ret=0;

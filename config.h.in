@@ -1,5 +1,11 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Get CPU Info by asm method */
+#undef CPU_INFO_BY_ASM
+
+/* Get CPU Info by c method */
+#undef CPU_INFO_BY_C
+
 /* Custom modes */
 #undef CUSTOM_MODES
 
@@ -67,9 +73,6 @@
    */
 #undef LT_OBJDIR
 
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
-
 /* Make use of ARM asm optimization */
 #undef OPUS_ARM_ASM
 
@@ -85,14 +88,17 @@
 /* Use ARM NEON inline asm optimizations */
 #undef OPUS_ARM_INLINE_NEON
 
-/* Define if assembler supports EDSP instructions */
+/* Define if compiler support EDSP Instructions */
 #undef OPUS_ARM_MAY_HAVE_EDSP
 
-/* Define if assembler supports ARMv6 media instructions */
+/* Define if compiler support MEDIA Instructions */
 #undef OPUS_ARM_MAY_HAVE_MEDIA
 
-/* Define if compiler supports NEON instructions */
+/* Define if compiler support NEON instructions */
 #undef OPUS_ARM_MAY_HAVE_NEON
+
+/* Compiler supports ARMv7 Neon Intrinsics */
+#undef OPUS_ARM_NEON_INTR
 
 /* Define if binary requires EDSP instruction support */
 #undef OPUS_ARM_PRESUME_EDSP
@@ -108,6 +114,12 @@
 
 /* Use run-time CPU capabilities detection */
 #undef OPUS_HAVE_RTCD
+
+/* For x86 sse2 instrinsics optimize */
+#undef OPUS_X86_MAY_HAVE_SSE2
+
+/* For x86 sse4.1 instrinsics optimizations */
+#undef OPUS_X86_MAY_HAVE_SSE4_1
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
