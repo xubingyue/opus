@@ -97,7 +97,8 @@
         {
                 return _mm_cvtss_si32(_mm_load_ss(&value));
         }
-#elif (defined(_MSC_VER) && _MSC_VER >= 1400) && (defined (WIN32) || defined (_WIN32))
+// TODO(winrt) Added !defined (WINRT) to fix the build for ARM. Check if this is accurate.
+#elif ((defined(_MSC_VER) && _MSC_VER >= 1400) && (defined (WIN32) || defined (_WIN32))) && !defined (WINRT)
         #include <math.h>
 
         /*      Win32 doesn't seem to have these functions.
