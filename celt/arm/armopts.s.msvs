@@ -38,4 +38,4 @@ OPUS_ARM_MAY_HAVE_MEDIA * 1
 ; Set the following to 1 if we have NEON (some ARMv7)
 OPUS_ARM_MAY_HAVE_NEON  * 1
 
-END
+  END
