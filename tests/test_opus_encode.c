@@ -54,6 +54,16 @@
 
 #define PI (3.141592653589793238462643f)
 
+#ifdef WINRT
+//WinRT runtime doesn't support basic executables. Test are run using WinRT application as runner
+//and this project as a static library, so we need exclusive main function name.
+# define main opus_encode_main
+#include <windows.h>
+//make stderr same as stdout
+#undef stderr
+#define stderr stdout
+#endif
+
 void generate_music(short *buf, opus_int32 len)
 {
    opus_int32 a1,b1,a2,b2;
@@ -472,8 +482,8 @@ int run_test1(int no_fuzz)
 
 int main(int _argc, char **_argv)
 {
-   const char * oversion;
-   const char * env_seed;
+   const char * oversion = NULL;
+   const char * env_seed = NULL;
    int env_used;
 
    if(_argc>2)
@@ -483,14 +493,20 @@ int main(int _argc, char **_argv)
    }
 
    env_used=0;
+#ifndef WINRT
    env_seed=getenv("SEED");
+#endif // !WINRT
    if(_argc>1)iseed=atoi(_argv[1]);
    else if(env_seed)
    {
       iseed=atoi(env_seed);
       env_used=1;
    }
-   else iseed=(opus_uint32)time(NULL)^((getpid()&65535)<<16);
+#ifdef WINRT
+   iseed = (opus_uint32)time(NULL) ^ ((GetCurrentProcessId() & 65535) << 16);
+#else
+   iseed = (opus_uint32)time(NULL) ^ ((getpid() & 65535) << 16);
+#endif
    Rw=Rz=iseed;
 
    oversion=opus_get_version_string();
@@ -501,7 +517,11 @@ int main(int _argc, char **_argv)
    /*Setting TEST_OPUS_NOFUZZ tells the tool not to send garbage data
      into the decoders. This is helpful because garbage data
      may cause the decoders to clip, which angers CLANG IOC.*/
-   run_test1(getenv("TEST_OPUS_NOFUZZ")!=NULL);
+#ifdef WINRT
+  run_test1(1);
+#else
+  run_test1(getenv("TEST_OPUS_NOFUZZ") != NULL);
+#endif
 
    fprintf(stderr,"Tests completed successfully.\n");
 
