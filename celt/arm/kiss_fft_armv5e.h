@@ -38,6 +38,8 @@
 #define LDRD_CONS "Uq"
 #endif
 
+#ifdef USE_MSVS_ARM_INTRINCICS
+#else
 #undef C_MUL
 #define C_MUL(m,a,b) \
     do{ \
@@ -114,5 +116,6 @@
     while(0)
 
 #endif /* FIXED_POINT */
+#endif //USE_MSVS_ARM_INTRINCICS
 
 #endif /* KISS_FFT_GUTS_H */

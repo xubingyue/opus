@@ -28,6 +28,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef SILK_MACROS_ARMv4_H
 #define SILK_MACROS_ARMv4_H
 
+#ifdef USE_MSVS_ARM_INTRINCICS
+#else
 /* (a32 * (opus_int32)((opus_int16)(b32))) >> 16 output have to be 32bit int */
 #undef silk_SMULWB
 static OPUS_INLINE opus_int32 silk_SMULWB_armv4(opus_int32 a, opus_int16 b)
@@ -99,5 +101,6 @@ static OPUS_INLINE opus_int32 silk_SMLAWW_armv4(opus_int32 a, opus_int32 b,
   return a+(rd_hi<<16)+(rd_lo>>16);
 }
 #define silk_SMLAWW(a, b, c) (silk_SMLAWW_armv4(a, b, c))
+#endif //USE_MSVS_ARM_INTRINCICS
 
 #endif /* SILK_MACROS_ARMv4_H */

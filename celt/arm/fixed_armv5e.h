@@ -32,6 +32,8 @@
 
 #include "fixed_armv4.h"
 
+#ifdef USE_MSVS_ARM_INTRINCICS
+#else
 /** 16x32 multiplication, followed by a 16-bit shift right. Results fits in 32 bits */
 #undef MULT16_32_Q16
 static OPUS_INLINE opus_val32 MULT16_32_Q16_armv5e(opus_val16 a, opus_val32 b)
@@ -47,7 +49,6 @@ static OPUS_INLINE opus_val32 MULT16_32_Q16_armv5e(opus_val16 a, opus_val32 b)
 }
 #define MULT16_32_Q16(a, b) (MULT16_32_Q16_armv5e(a, b))
 
-
 /** 16x32 multiplication, followed by a 15-bit shift right. Results fits in 32 bits */
 #undef MULT16_32_Q15
 static OPUS_INLINE opus_val32 MULT16_32_Q15_armv5e(opus_val16 a, opus_val32 b)
@@ -62,7 +63,6 @@ static OPUS_INLINE opus_val32 MULT16_32_Q15_armv5e(opus_val16 a, opus_val32 b)
   return res<<1;
 }
 #define MULT16_32_Q15(a, b) (MULT16_32_Q15_armv5e(a, b))
-
 
 /** 16x32 multiply, followed by a 15-bit shift right and 32-bit add.
     b must fit in 31 bits.
@@ -112,5 +112,6 @@ static OPUS_INLINE opus_val32 MULT16_16_armv5e(opus_val16 a, opus_val16 b)
   return res;
 }
 #define MULT16_16(a, b) (MULT16_16_armv5e(a, b))
+#endif  //USE_MSVS_ARM_INTRINCICS
 
 #endif

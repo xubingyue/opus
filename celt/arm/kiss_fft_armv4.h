@@ -32,6 +32,8 @@
 
 #ifdef FIXED_POINT
 
+#ifdef USE_MSVS_ARM_INTRINCICS
+#else
 #undef C_MUL
 #define C_MUL(m,a,b) \
     do{ \
@@ -88,6 +90,7 @@
     } \
     while(0)
 
+
 #undef C_MULC
 #define C_MULC(m,a,b) \
     do{ \
@@ -117,5 +120,7 @@
     while(0)
 
 #endif /* FIXED_POINT */
+
+#endif //USE_MSVS_ARM_INTRINCICS
 
 #endif /* KISS_FFT_ARMv4_H */

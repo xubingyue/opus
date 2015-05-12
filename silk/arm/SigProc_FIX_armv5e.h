@@ -29,6 +29,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef SILK_SIGPROC_FIX_ARMv5E_H
 #define SILK_SIGPROC_FIX_ARMv5E_H
 
+#ifdef USE_MSVS_ARM_INTRINCICS
+#else
 #undef silk_SMULTT
 static OPUS_INLINE opus_int32 silk_SMULTT_armv5e(opus_int32 a, opus_int32 b)
 {
@@ -57,5 +59,6 @@ static OPUS_INLINE opus_int32 silk_SMLATT_armv5e(opus_int32 a, opus_int32 b,
   return res;
 }
 #define silk_SMLATT(a, b, c) (silk_SMLATT_armv5e(a, b, c))
+#endif //USE_MSVS_ARM_INTRINCICS
 
 #endif

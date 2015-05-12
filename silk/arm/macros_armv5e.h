@@ -29,6 +29,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef SILK_MACROS_ARMv5E_H
 #define SILK_MACROS_ARMv5E_H
 
+
+#ifdef USE_MSVS_ARM_INTRINCICS
+#else
 /* (a32 * (opus_int32)((opus_int16)(b32))) >> 16 output have to be 32bit int */
 #undef silk_SMULWB
 static OPUS_INLINE opus_int32 silk_SMULWB_armv5e(opus_int32 a, opus_int16 b)
@@ -153,6 +156,7 @@ static OPUS_INLINE opus_int32 silk_SMLABT_armv5e(opus_int32 a, opus_int32 b,
 }
 #define silk_SMLABT(a, b, c) (silk_SMLABT_armv5e(a, b, c))
 
+
 /* add/subtract with output saturated */
 #undef silk_ADD_SAT32
 static OPUS_INLINE opus_int32 silk_ADD_SAT32_armv5e(opus_int32 a, opus_int32 b)
@@ -167,6 +171,7 @@ static OPUS_INLINE opus_int32 silk_ADD_SAT32_armv5e(opus_int32 a, opus_int32 b)
   return res;
 }
 #define silk_ADD_SAT32(a, b) (silk_ADD_SAT32_armv5e(a, b))
+
 
 #undef silk_SUB_SAT32
 static OPUS_INLINE opus_int32 silk_SUB_SAT32_armv5e(opus_int32 a, opus_int32 b)
@@ -209,5 +214,6 @@ static OPUS_INLINE opus_int32 silk_CLZ32_armv5(opus_int32 in32)
   return res;
 }
 #define silk_CLZ32(in32) (silk_CLZ32_armv5(in32))
+#endif //USE_MSVS_ARM_INTRINCICS
 
 #endif /* SILK_MACROS_ARMv5E_H */
