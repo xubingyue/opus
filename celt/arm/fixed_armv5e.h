@@ -34,17 +34,17 @@
 
 #ifdef USE_MSVS_ARM_INTRINCICS
 /** 16x32 multiplication, followed by a 16-bit shift right. Results fits in 32 bits */
-#define MULT16_32_Q16_armv5e(a,b)   _arm_smulwb(b, a)
+#define MULT16_32_Q16_armv5e(a,b)   _arm_smulwb((b), (a))
 /** 16x32 multiplication, followed by a 15-bit shift right. Results fits in 32 bits */
-#define MULT16_32_Q15_armv5e(a,b)   _arm_smulwb(((b) << 1), a)
+#define MULT16_32_Q15_armv5e(a,b)   _arm_smulwb(((b) << 1), (a))
 /** 16x32 multiply, followed by a 15-bit shift right and 32-bit add.
 b must fit in 31 bits.
 Result fits in 32 bits. */
-#define MAC16_32_Q15_armv5e(c,a,b)  _arm_smlawb(((b) << 1), a, c)
+#define MAC16_32_Q15_armv5e(c,a,b)  _arm_smlawb(((b) << 1), (a), (c))
 /** 16x16 multiply-add where the result fits in 32 bits */
-#define MAC16_16_armv5e(c,a,b)      _arm_smlabb(a, b, c)
+#define MAC16_16_armv5e(c,a,b)      _arm_smlabb((a), (b), (c))
 /** 16x16 multiplication where the result fits in 32 bits */
-#define MULT16_16_armv5e(a,b)       _arm_smulbb(a,b)
+#define MULT16_16_armv5e(a,b)       _arm_smulbb((a), (b))
 #else
 /** 16x32 multiplication, followed by a 16-bit shift right. Results fits in 32 bits */
 static OPUS_INLINE opus_val32 MULT16_32_Q16_armv5e(opus_val16 a, opus_val32 b)

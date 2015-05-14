@@ -30,9 +30,9 @@
 #ifdef USE_MSVS_ARM_INTRINCICS
 #include <arm_neon.h>
 /** 16x32 multiplication, followed by a 16-bit shift right. Results fits in 32 bits */
-#define MULT16_32_Q16_armv4(a,b) (((opus_val32)_arm_smull(a,b))>>16)
+#define MULT16_32_Q16_armv4(a,b) (((opus_val32)_arm_smull((a), (b)))>>16)
 /** 16x32 multiplication, followed by a 15-bit shift right. Results fits in 32 bits */
-#define MULT16_32_Q15_armv4(a, b) (((opus_val32)_arm_smull(a, b)) >> 15)
+#define MULT16_32_Q15_armv4(a, b) (((opus_val32)_arm_smull((a), (b))) >> 15)
 #else
 /** 16x32 multiplication, followed by a 16-bit shift right. Results fits in 32 bits */
 static OPUS_INLINE opus_val32 MULT16_32_Q16_armv4(opus_val16 a, opus_val32 b)
