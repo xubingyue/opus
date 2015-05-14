@@ -50,7 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* add/subtract with output saturated */
 #define silk_ADD_SAT32_armv5e(a, b)   _arm_qadd((a), (b))
 #define silk_SUB_SAT32_armv5e(a, b)   _arm_qsub((a), (b))
-#define silk_CLZ16_armv5(in16)        _arm_clz((in16)<<16|0x8000)
+#define silk_CLZ16_armv5(in16)        _arm_clz(((opus_int16)(in16))<<16|0x8000)
 #define silk_CLZ32_armv5(in32)        _arm_clz((in32))
 #else
 /* (a32 * (opus_int32)((opus_int16)(b32))) >> 16 output have to be 32bit int */
@@ -212,10 +212,10 @@ static OPUS_INLINE opus_int32 silk_CLZ32_armv5(opus_int32 in32)
 
 #endif //USE_MSVS_ARM_INTRINCICS
 
-#undef silk_SMULWB
+/*#undef silk_SMULWB
 #define silk_SMULWB(a, b) (silk_SMULWB_armv5e(a, b))
 #undef silk_SMLAWB
-#define silk_SMLAWB(a, b, c) (silk_SMLAWB_armv5e(a, b, c))
+#define silk_SMLAWB(a, b, c) (silk_SMLAWB_armv5e(a, b, c))*/
 #undef silk_SMULWT
 #define silk_SMULWT(a, b) (silk_SMULWT_armv5e(a, b))
 #undef silk_SMLAWT

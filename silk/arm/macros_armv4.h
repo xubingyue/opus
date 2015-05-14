@@ -30,9 +30,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef USE_MSVS_ARM_INTRINCICS
 /* (a32 * (opus_int32)((opus_int16)(b32))) >> 16 output have to be 32bit int */
-#define silk_SMULWB_armv4(a, b)     (((opus_val32)_arm_smull((a),(b))) >> 16)
+#define silk_SMULWB_armv4(a, b)    ((_arm_smull((a),(opus_int32)((opus_int16)(b)))) >> 16)
+//#define silk_SMULWB_armv4(a, b)    (((opus_int32)(_arm_smull((a),(opus_int32)((opus_int16)(b))))) >> 16)
 /* (a32 * (b32 >> 16)) >> 16 */
-#define silk_SMULWT_armv4(a, b)     ((opus_val32)(_arm_smull((a), (b)&~0xFFFF)))
+#define silk_SMULWT_armv4(a, b)     ((opus_int32)(_arm_smull((a), (b)&~0xFFFF)))
 /* (a32 * b32) >> 16 */
 #define silk_SMULWW_armv4(a, b)     silk_SMULWB_armv4((a), (b))
 #define silk_SMLAWW_armv4(a, b, c)  (silk_SMULWW_armv4((b), (c)) + (a))
