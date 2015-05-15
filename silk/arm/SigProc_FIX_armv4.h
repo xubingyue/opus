@@ -29,8 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef SILK_SIGPROC_FIX_ARMv4_H
 #define SILK_SIGPROC_FIX_ARMv4_H
 
-#ifdef USE_MSVS_ARM_INTRINCICS
-#else
+#ifndef USE_MSVS_ARM_INTRINCICS
 #undef silk_MLA
 static OPUS_INLINE opus_int32 silk_MLA_armv4(opus_int32 a, opus_int32 b,
   opus_int32 c)

@@ -30,11 +30,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef USE_MSVS_ARM_INTRINCICS
 /* (a32 * (opus_int32)((opus_int16)(b32))) >> 16 output have to be 32bit int */
-#define silk_SMULWB_armv4(a, b)    (_arm_smull((a),(opus_int32)((opus_int16)(b))) >> 16)
+#define silk_SMULWB_armv4(a, b)    (_arm_smull((a),(opus_int16)(b)) >> 16)
 /* (a32 * (b32 >> 16)) >> 16 */
 #define silk_SMULWT_armv4(a, b)     ((opus_int32)(_arm_smull((a), (b)&~0xFFFF)))
 /* (a32 * b32) >> 16 */
-#define silk_SMULWW_armv4(a, b)     silk_SMULWB_armv4((a), (b))
+#define silk_SMULWW_armv4(a, b)     (_arm_smull((a),(b)) >> 16)
 #define silk_SMLAWW_armv4(a, b, c)  (silk_SMULWW_armv4((b), (c)) + (a))
 #else
 /* (a32 * (opus_int32)((opus_int16)(b32))) >> 16 output have to be 32bit int */
@@ -104,11 +104,10 @@ static OPUS_INLINE opus_int32 silk_SMLAWW_armv4(opus_int32 a, opus_int32 b,
 ///* a32 + (b32 * (c32 >> 16)) >> 16 */
 #undef silk_SMLAWT
 #define silk_SMLAWT(a, b, c) ((a) + silk_SMULWT(b, c))
-//ERROR - FREEZE -> silk_SMULWB probably doesn't work
-/*#undef silk_SMULWW
+#undef silk_SMULWW
 #define silk_SMULWW(a, b) (silk_SMULWW_armv4(a, b))
 #undef silk_SMLAWW
-#define silk_SMLAWW(a, b, c) (silk_SMLAWW_armv4(a, b, c))*/
+#define silk_SMLAWW(a, b, c) (silk_SMLAWW_armv4(a, b, c))
 
 
 #endif /* SILK_MACROS_ARMv4_H */
