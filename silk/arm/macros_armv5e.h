@@ -50,8 +50,8 @@ POSSIBILITY OF SUCH DAMAGE.
 /* add/subtract with output saturated */
 #define silk_ADD_SAT32_armv5e(a, b)   _arm_qadd((a), (b))
 #define silk_SUB_SAT32_armv5e(a, b)   _arm_qsub((a), (b))
-#define silk_CLZ16_armv5(in16)        _arm_clz(((opus_int16)(in16))<<16|0x8000)
-#define silk_CLZ32_armv5(in32)        _arm_clz((opus_int32)(in32))
+#define silk_CLZ16_armv5(in16)        ((opus_int32)_arm_clz(((opus_int16)(in16))<<16|0x8000))
+#define silk_CLZ32_armv5(in32)        ((opus_int32)_arm_clz((unsigned int)(in32)))
 #else
 /* (a32 * (opus_int32)((opus_int16)(b32))) >> 16 output have to be 32bit int */
 static OPUS_INLINE opus_int32 silk_SMULWB_armv5e(opus_int32 a, opus_int16 b)
@@ -234,8 +234,7 @@ static OPUS_INLINE opus_int32 silk_CLZ32_armv5(opus_int32 in32)
 #define silk_SUB_SAT32(a, b) (silk_SUB_SAT32_armv5e(a, b))
 #undef silk_CLZ16
 #define silk_CLZ16(in16) (silk_CLZ16_armv5(in16))
-//ERROR - CRASHES
-/*#undef silk_CLZ32
-#define silk_CLZ32(in32) (silk_CLZ32_armv5(in32))*/
+#undef silk_CLZ32
+#define silk_CLZ32(in32) (silk_CLZ32_armv5(in32))
 
 #endif /* SILK_MACROS_ARMv5E_H */
