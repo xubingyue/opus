@@ -45,7 +45,9 @@
 
 #if defined(_MSC_VER)
 /*For GetExceptionCode() and EXCEPTION_ILLEGAL_INSTRUCTION.*/
-# define WIN32_LEAN_AND_MEAN
+# ifndef WIN32_LEAN_AND_MEAN
+#   define WIN32_LEAN_AND_MEAN
+# endif
 # define WIN32_EXTRA_LEAN
 # include <windows.h>
 
