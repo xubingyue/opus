@@ -164,14 +164,16 @@
         (m).i = SHL32(SUB32(mi1__, mi2__), 1); \
     } \
     while(0)
-#endif //USE_MSVS_ARM_INTRINCICS
+#endif  // USE_MSVS_ARM_INTRINCICS
 
+#ifdef USE_MSVS_ARM_INTRINCICS
 #undef C_MUL 
 #define C_MUL(m, a, b) C_MUL_armv5e((m), (a), (b))
 #undef C_MUL4
 #define C_MUL4(m, a, b) C_MUL4_armv5e((m), (a), (b))
 #undef C_MULC
 #define C_MULC(m, a, b) C_MULC_armv5e((m), (a), (b))
+#endif  // USE_MSVS_ARM_INTRINCICS 
 
 #endif /* FIXED_POINT */
 
